@@ -13,7 +13,12 @@ class Gene:
     def mutate(self, p: float = 1) -> Gene:
         raise NotImplementedError
 
-    def crossover(self, gene: Gene, p: float = 1) -> Tuple[Gene, Gene]:
+    def crossover(self, gene: Gene) -> Tuple[Gene, Gene]:
+        raise NotImplementedError
+
+
+class Selection:
+    def select(self, population: List[Gene], scores: List[float]) -> Tuple[Gene, float]:
         raise NotImplementedError
 
 
@@ -34,12 +39,9 @@ class HarmonyGene(Gene):
     def __getitem__(self, item):
         return self.gene[item]
 
-    def crossover(self, gene: HarmonyGene, p: float = 1) -> Tuple[HarmonyGene, HarmonyGene]:
+    def crossover(self, gene: HarmonyGene) -> Tuple[HarmonyGene, HarmonyGene]:
         # single point crossover
         assert len(self) == len(gene)
-
-        if random.random() >= p:
-            return self, gene
 
         p = random.randint(1, len(self) - 1)
 
@@ -49,7 +51,6 @@ class HarmonyGene(Gene):
         )
 
     def mutate(self, p: float = 1) -> HarmonyGene:
-        # choose a random chord as a mutation
         return HarmonyGene(
             [random.choice(self.alphabet) if random.random() < p else x for x in self.gene],
             self.alphabet
@@ -60,8 +61,12 @@ def initialize_population(n_population: int, gene_length: int, alphabet: List[st
     return [HarmonyGene([random.choice(alphabet) for _ in range(gene_length)], alphabet) for _ in range(n_population)]
 
 
-def tournament(population: List[Gene], scores: List[float], k: int) -> Tuple[Gene, float]:
-    return max(random.choices(list(zip(population, scores)), k=k), key=itemgetter(1))
+@dataclass
+class TournamentSelection(Selection):
+    k: int
+
+    def select(self, population: List[Gene], scores: List[float]) -> Tuple[Gene, float]:
+        return max(random.choices(list(zip(population, scores)), k=self.k), key=itemgetter(1))
 
 
 GeneType = TypeVar('GeneType', bound=Gene)
@@ -70,6 +75,7 @@ GeneType = TypeVar('GeneType', bound=Gene)
 def genetic_algorithm(
         optimize_func: Callable[[GeneType], float],
         initial_population: List[GeneType],
+        selection: Selection,
         p_crossover: float,
         p_mutation: float,
         epochs: int,
@@ -90,13 +96,22 @@ def genetic_algorithm(
         next_scores = []
 
         for i in range(0, len(population), 2):
-            parent_1, _ = tournament(population, scores, 3)
-            parent_2, _ = tournament(population, scores, 3)
+            parent_1, score_1 = selection.select(population, scores)
+            parent_2, score_2 = selection.select(population, scores)
 
-            for child in parent_1.crossover(parent_2, p=p_crossover)[:int(i + 2 > len(population)) + 1]:
+            if random.random() < p_crossover:
+                children = parent_1.crossover(parent_2)
+                child_scores = [None, None]
+            else:
+                children = (parent_1, parent_2)
+                child_scores = (score_1, score_2)
+
+            for child, score in list(zip(children, child_scores))[:int(i + 2 > len(population)) + 1]:
                 if random.random() < p_mutation:
                     child = child.mutate(p=p_location_mutation)
-                score = optimize_func(child)
+
+                if score is None:
+                    score = optimize_func(child)
 
                 next_population.append(child)
                 next_scores.append(score)
