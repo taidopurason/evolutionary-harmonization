@@ -8,13 +8,13 @@ def get_chord_notes(chord: str) -> List[str]:
     return from_shorthand(chord)
 
 
-def note_match_fitness(chord: str, notes: Iterable[str]) -> int:
+def note_match_fitness(chord: str, notes: Iterable[str]) -> float:
     chord_notes = set(get_chord_notes(chord))
     notes = set(map(lambda x: Note(x).name, notes))
-    return len(chord_notes.intersection(notes))
+    return len(chord_notes.intersection(notes)) / len(chord_notes)
 
 
-def note_mismatch_penalty(chord: str, notes: Iterable[str]) -> int:
+def note_mismatch_penalty(chord: str, notes: Iterable[str]) -> float:
     chord_notes = set(get_chord_notes(chord))
     notes = set(map(lambda x: Note(x).name, notes))
-    return len(chord_notes.difference(notes))
+    return len(chord_notes.difference(notes)) / len(chord_notes)
