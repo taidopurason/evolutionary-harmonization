@@ -39,6 +39,12 @@ class HarmonyGene(Gene):
     def __getitem__(self, item):
         return self.gene[item]
 
+    @staticmethod
+    def initialize_population(n_population: int, gene_length: int, alphabet: List[str]) -> List[HarmonyGene]:
+        return [
+            HarmonyGene([random.choice(alphabet) for _ in range(gene_length)], alphabet) for _ in range(n_population)
+        ]
+
     def crossover(self, gene: HarmonyGene) -> Tuple[HarmonyGene, HarmonyGene]:
         # single point crossover
         assert len(self) == len(gene)
@@ -55,10 +61,6 @@ class HarmonyGene(Gene):
             [random.choice(self.alphabet) if random.random() < p else x for x in self.gene],
             self.alphabet
         )
-
-
-def initialize_population(n_population: int, gene_length: int, alphabet: List[str]) -> List[HarmonyGene]:
-    return [HarmonyGene([random.choice(alphabet) for _ in range(gene_length)], alphabet) for _ in range(n_population)]
 
 
 @dataclass
