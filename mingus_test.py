@@ -1,3 +1,5 @@
+from typing import Tuple, Iterable
+
 from mingus.containers import Bar, Track, NoteContainer, Composition
 from mingus.midi.midi_file_out import write_Composition
 
@@ -21,7 +23,7 @@ sixteenth = Fraction(1, 16)
 # lithne näide
 
 # eeltakt + 4 takti sünnipäeva laulu
-notes = [
+test_melody = (
     (
         ("C-5", dot(eighth)),
         ("C-5", sixteenth)
@@ -44,43 +46,50 @@ notes = [
     (
         ("F-5", half),
     )
-]
+)
 
 # akordid iga takti algusesse
-chords = [
-    "C",
+test_chords = (
+    "",
     "F",
     "C",
     "C",
     "F"
-]
+)
 
-# midi genereerimine
-melody_track = Track()
-chord_track = Track()
 
-for chord, bar in zip(chords, notes):
-    # võtab nootide järgi taktimõõdu
-    bar_length = sum(note[1] for note in bar)
-    ratio = bar_length.as_integer_ratio()
+def write_composition(melody: Iterable[Tuple[Tuple[str, Fraction]]], chords: Iterable[str],
+                      filename: str = "test.midi"):
+    # midi genereerimine
+    melody_track = Track()
+    chord_track = Track()
 
-    note_bar = Bar(meter=ratio)
-    chord_bar = Bar(meter=ratio)
+    for chord, bar in zip(chords, melody):
+        # võtab nootide järgi taktimõõdu
+        bar_length = sum(note[1] for note in bar)
+        ratio = bar_length.as_integer_ratio()
 
-    # lisab noodid
-    for note, duration in bar:
-        if not note_bar.place_notes(note, to_mingus(duration)):
+        note_bar = Bar(meter=ratio)
+        chord_bar = Bar(meter=ratio)
+
+        # lisab noodid
+        for note, duration in bar:
+            if not note_bar.place_notes(note, to_mingus(duration)):
+                raise ValueError("more notes than fit in a bar")
+
+        if not chord_bar.place_notes(NoteContainer().from_chord_shorthand(chord) if chord else None,
+                                     to_mingus(bar_length)):
             raise ValueError("more notes than fit in a bar")
 
-    # lisab akordi
-    if not chord_bar.place_notes(NoteContainer().from_chord_shorthand(chord), to_mingus(bar_length)):
-        raise ValueError("more notes than fit in a bar")
+        melody_track.add_bar(note_bar)
+        chord_track.add_bar(chord_bar)
 
-    melody_track.add_bar(note_bar)
-    chord_track.add_bar(chord_bar)
+    composition = Composition()
+    composition.add_track(melody_track)
+    composition.add_track(chord_track)
 
-composition = Composition()
-composition.add_track(melody_track)
-composition.add_track(chord_track)
+    write_Composition(filename, composition)
 
-write_Composition("test.midi", composition)
+
+if __name__ == "__main__":
+    write_composition(test_melody, test_chords)
