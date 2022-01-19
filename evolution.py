@@ -63,6 +63,40 @@ class HarmonyGene(Gene):
         )
 
 
+class Callback:
+    def on_begin(self):
+        pass
+
+    def on_end(self):
+        pass
+
+    def on_epoch_end(self, best_solution: Gene, best_score: float, epoch: int) -> bool:
+        return False
+
+
+class EarlyStopping(Callback):
+    def __init__(self, patience):
+        self.patience = patience
+        self.best_score = None
+        self.not_improved = 0
+
+    def on_begin(self):
+        self.not_improved = 0
+
+    def on_epoch_end(self, best_solution: Gene, best_score: float, epoch: int) -> bool:
+        if self.best_score is None:
+            self.best_score = best_score
+
+        if best_score <= self.best_score:
+            self.not_improved += 1
+            if self.not_improved >= self.patience:
+                logger.info(f"The fitness has not improved for {self.patience} epochs. Stopping training at epoch {epoch}")
+                return True
+        else:
+            self.not_improved = 0
+            self.best_score = best_score
+
+
 @dataclass
 class TournamentSelection(Selection):
     k: int
@@ -93,7 +127,7 @@ def genetic_algorithm(
     best_solution = population[best_idx]
     best_score = scores[best_idx]
 
-    for i in range(epochs):
+    for j in range(epochs):
         next_population = []
         next_scores = []
 
@@ -103,14 +137,15 @@ def genetic_algorithm(
 
             if random.random() < p_crossover:
                 children = parent_1.crossover(parent_2)
-                child_scores = [None, None]
+                child_scores = (None, None)
             else:
                 children = (parent_1, parent_2)
                 child_scores = (score_1, score_2)
 
-            for child, score in list(zip(children, child_scores))[:int(i + 2 > len(population)) + 1]:
+            for child, score in list(zip(children, child_scores))[:int(i + 1 < len(population)) + 1]:
                 if random.random() < p_mutation:
                     child = child.mutate(p=p_location_mutation)
+                    score = None
 
                 if score is None:
                     score = optimize_func(child)
