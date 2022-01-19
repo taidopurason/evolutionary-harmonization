@@ -4,10 +4,10 @@ from typing import Iterable, Tuple
 from evolution import HarmonyGene, genetic_algorithm, TournamentSelection
 from mingus_test import write_composition, test_melody, test_chords
 from mingus.core.scales import get_notes
-from utils import note_match_fitness, note_mismatch_penalty
+from utils import note_match_fitness, note_mismatch_penalty, chord_progression_fitness
 
 
-def fitness(gene: HarmonyGene, melody: Iterable[Tuple[Tuple[str, Fraction]]]) -> float:
+def fitness(gene: HarmonyGene, melody: Iterable[Tuple[Tuple[str, Fraction]]], key: str) -> float:
     melody_notes = set(note[0] for bar in melody for note in bar)
 
     fitness = 0
@@ -16,6 +16,8 @@ def fitness(gene: HarmonyGene, melody: Iterable[Tuple[Tuple[str, Fraction]]]) ->
         fitness += note_match_fitness(chord, bar_notes)
         fitness -= 0.7 * note_mismatch_penalty(chord, bar_notes)
         fitness -= 0.3 * note_mismatch_penalty(chord, melody_notes)
+
+    fitness += chord_progression_fitness(gene.gene, key)
 
     return fitness
 
@@ -36,7 +38,7 @@ if __name__ == "__main__":
     print("Alphabet", alphabet)
     initial_pop = HarmonyGene.initialize_population(n_population * 10, n_population, alphabet)
     generated_chords, score = genetic_algorithm(
-        lambda x: fitness(x, test_melody),
+        lambda x: fitness(x, test_melody, key),
         initial_pop,
         TournamentSelection(5),
         p_crossover=0.8,
