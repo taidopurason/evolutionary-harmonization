@@ -6,7 +6,7 @@ User has to input the melody, key and the alphabet of chords that are suitable t
 
 ## Requirements
 ```
-mingus==6.0.1
+mingus==0.6.1
 LilyPond (if you want to generate sheet music)
 ```
 
