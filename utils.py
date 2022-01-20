@@ -17,13 +17,13 @@ def get_chord_notes(chord: str) -> List[str]:
 
 def note_match_fitness(chord: str, notes: Iterable[str]) -> float:
     chord_notes = set(get_chord_notes(chord))
-    notes = set(map(lambda x: Note(x).name, notes))
+    notes = set(map(lambda x: Note(x).name, filter(lambda x: x is not None, notes)))
     return len(chord_notes.intersection(notes)) / len(chord_notes)
 
 
 def note_mismatch_penalty(chord: str, notes: Iterable[str]) -> float:
     chord_notes = set(get_chord_notes(chord))
-    notes = set(map(lambda x: Note(x).name, notes))
+    notes = set(map(lambda x: Note(x).name, filter(lambda x: x is not None, notes)))
     return len(chord_notes.difference(notes)) / len(chord_notes)
 
 def chord_progression_fitness(chords: List[str], key: str) -> float:
