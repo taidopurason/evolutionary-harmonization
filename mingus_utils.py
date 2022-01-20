@@ -57,9 +57,25 @@ test_chords = (
     "F"
 )
 
+def create_melody(melody: Iterable[Tuple[Tuple[str, Fraction]]]) -> Track:
+    melody_track = Track()
+    for bar in melody:
+        bar_length = sum(note[1] for note in bar)
+        ratio = (bar_length.numerator, bar_length.denominator)
 
-def write_composition(melody: Iterable[Tuple[Tuple[str, Fraction]]], chords: Iterable[str],
-                      filename: str = "test.midi"):
+        note_bar = Bar(meter=ratio)
+
+        for note, duration in bar:
+            if not note_bar.place_notes(note, to_mingus(duration)):
+                raise ValueError("more notes than fit in a bar")
+
+
+        melody_track.add_bar(note_bar)
+
+    return melody_track
+
+
+def create_composition(melody: Iterable[Tuple[Tuple[str, Fraction]]], chords: Iterable[str]) -> Composition:
     # midi genereerimine
     melody_track = Track()
     chord_track = Track()
@@ -67,7 +83,7 @@ def write_composition(melody: Iterable[Tuple[Tuple[str, Fraction]]], chords: Ite
     for chord, bar in zip(chords, melody):
         # võtab nootide järgi taktimõõdu
         bar_length = sum(note[1] for note in bar)
-        ratio = bar_length.as_integer_ratio()
+        ratio = (bar_length.numerator, bar_length.denominator)
 
         note_bar = Bar(meter=ratio)
         chord_bar = Bar(meter=ratio)
@@ -88,8 +104,7 @@ def write_composition(melody: Iterable[Tuple[Tuple[str, Fraction]]], chords: Ite
     composition.add_track(melody_track)
     composition.add_track(chord_track)
 
-    write_Composition(filename, composition)
-
+    return composition
 
 if __name__ == "__main__":
-    write_composition(test_melody, test_chords)
+    write_Composition("test.midi", create_composition(test_melody, test_chords))

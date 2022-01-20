@@ -1,9 +1,10 @@
 from fractions import Fraction
 from typing import Iterable, Tuple
 
-from evolution import HarmonyGene, genetic_algorithm, TournamentSelection
-from mingus_test import write_composition, test_melody, test_chords
-from mingus.core.scales import get_notes
+from mingus.midi.midi_file_out import write_Composition
+
+from evolution import HarmonyGene, genetic_algorithm, TournamentSelection, EarlyStopping
+from mingus_utils import create_composition, test_melody, test_chords
 from utils import note_match_fitness, note_mismatch_penalty, chord_progression_fitness
 
 
@@ -23,8 +24,6 @@ def fitness(gene: HarmonyGene, melody: Iterable[Tuple[Tuple[str, Fraction]]], ke
 
 
 if __name__ == "__main__":
-    write_composition(test_melody, test_chords, "correct.midi")
-
     # alphabet = get_notes("F")
     # alphabet = ['Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#']
     # alphabet += [a + "m" for a in alphabet]
@@ -43,8 +42,11 @@ if __name__ == "__main__":
         TournamentSelection(5),
         p_crossover=0.8,
         p_mutation=0.3,
-        epochs=5000
+        epochs=500,
+        callbacks=[EarlyStopping(30)]
     )
     print("Best score:", score)
     print("Generated chords", generated_chords)
-    write_composition(test_melody, generated_chords, "generated.midi")
+
+    write_Composition("generated.midi", create_composition(test_melody, generated_chords))
+    write_Composition("correct.midi", create_composition(test_melody, test_chords))
