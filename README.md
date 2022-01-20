@@ -1,4 +1,6 @@
 # Evolutionary harmonization
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/taidopurason/evolutionary-harmonization/blob/main/evolutionary_harmonization_colab.ipynb]
+
 
 This code can generate a chord progression to any piece of melody. 
 User has to input the melody, key and the alphabet of chords that are suitable to that key.
