@@ -45,6 +45,7 @@ test_melody = (
     ),
     (
         ("F-5", half),
+        (None, quarter),
     )
 )
 
