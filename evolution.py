@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from operator import itemgetter
-from typing import Tuple, List, Callable, TypeVar, Optional
+from typing import Tuple, List, Callable, TypeVar, Optional, Sequence
 
 import random
 
 import numpy as np
 
+logger = logging.getLogger(__name__)
 
 class Gene:
     def mutate(self, p: float = 1) -> Gene:
@@ -115,8 +117,12 @@ def genetic_algorithm(
         p_crossover: float,
         p_mutation: float,
         epochs: int,
-        p_location_mutation: Optional[float] = None
+        p_location_mutation: Optional[float] = None,
+        callbacks: Sequence[Callback] = tuple()
 ) -> Tuple[GeneType, float]:
+    for callback in callbacks:
+        callback.on_begin()
+
     if p_location_mutation is None:
         p_location_mutation = 1 / len(initial_population[0])
 
@@ -159,5 +165,11 @@ def genetic_algorithm(
 
         population = next_population
         scores = next_scores
+
+        if any(callback.on_epoch_end(best_solution, best_score, j) for callback in callbacks):
+            break
+
+    for callback in callbacks:
+        callback.on_end()
 
     return best_solution, best_score
